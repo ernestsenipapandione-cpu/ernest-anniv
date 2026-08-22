@@ -42,23 +42,36 @@ export default function Countdown({ targetDate }) {
     );
   });
 
+  const isTimeUp = timerComponents.length === 0;
+
   return (
     <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-purple-600 to-pink-500 rounded-3xl shadow-xl text-white max-w-lg mx-auto">
-      <div className="flex items-center gap-2 mb-4">
-        <Timer className="w-6 h-6 text-amber-300 animate-pulse" />
-        <h2 className="text-xl font-bold tracking-wide">Compte à rebours avant la fête !</h2>
+      
+      {/* --- TITRE : TEXTE ORIGINAL EN ATTENTE / WOLOF UNE FOIS FINI --- */}
+      <div className="flex items-center gap-2 mb-4 text-center">
+        {isTimeUp ? (
+          <PartyPopper className="w-7 h-7 text-amber-300 animate-bounce" />
+        ) : (
+          <Timer className="w-6 h-6 text-amber-300 animate-pulse" />
+        )}
+        <h2 className="text-xl font-black tracking-wide">
+          {isTimeUp ? "Heure bi djiotna !" : "Compte à rebours avant la fête !"}
+        </h2>
       </div>
 
-      {timerComponents.length ? (
+      {/* --- AFFICHAGE DU COMPTEUR OU MESSAGE DE FÊTE --- */}
+      {!isTimeUp ? (
         <div className="grid grid-cols-4 gap-2 sm:gap-4">
           {timerComponents}
         </div>
       ) : (
-        <div className="flex items-center gap-2 text-2xl font-bold text-amber-300 py-4 animate-bounce">
-          <PartyPopper className="w-8 h-8" />
-          <span>C'est l'heure de faire la fête ! 🎉</span>
+        <div className="flex flex-col items-center gap-2 text-center py-4 animate-pulse">
+          <span className="text-3xl font-black text-amber-300 tracking-wider">
+            🎉 C'est l'heure de faire la fête ! 🎉
+          </span>
         </div>
       )}
+
     </div>
   );
 }
