@@ -4,10 +4,11 @@ import PartyPage from './components/PartyPage';
 import { Sparkles, Lock } from 'lucide-react';
 
 export default function App() {
-  // ⚠️ TA DATE D'ANNIVERSAIRE (Demain à minuit)
+  // ⚠️ TA DATE D'ANNIVERSAIRE
   const targetDate = "2026-08-23T00:00:00";
 
   const [currentPage, setCurrentPage] = useState('home');
+  // 🔒 REVERROUILLÉ : Passe automatiquement à true quand le décompte atteint zéro
   const [isPartyTime, setIsPartyTime] = useState(false);
 
   // Vérification si le décompte est terminé
@@ -19,8 +20,8 @@ export default function App() {
       }
     };
 
-    checkTime(); // Vérifie immédiatement au chargement
-    const timer = setInterval(checkTime, 1000); // Vérifie chaque seconde
+    checkTime();
+    const timer = setInterval(checkTime, 1000);
 
     return () => clearInterval(timer);
   }, [targetDate]);
