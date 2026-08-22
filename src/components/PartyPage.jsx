@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Lock, Unlock, Send, Sparkles, ChevronRight, RotateCcw, X, ZoomIn, History, ChevronLeft, Terminal } from 'lucide-react';
+import { ArrowLeft, Lock, Unlock, Send, Sparkles, ChevronRight, RotateCcw, X, ZoomIn, History, ChevronLeft } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-// --- (A) FOND MATRIX : VERT HACKER D'ORIGINE ---
+// --- FOND MATRIX VERT ---
 function MatrixBackground() {
   const canvasRef = useRef(null);
 
@@ -24,15 +24,12 @@ function MatrixBackground() {
     const drops = Array(columns).fill(1);
 
     const draw = () => {
-      // Voile noir très léger pour l'effet de traînée
       ctx.fillStyle = 'rgba(2, 6, 23, 0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Vert Hacker d'origine
       ctx.fillStyle = '#22c55e'; 
       ctx.font = `bold ${fontSize}px monospace`;
       
-      // Halo lumineux vert
       ctx.shadowBlur = 8;
       ctx.shadowColor = '#15803d';
 
@@ -48,22 +45,16 @@ function MatrixBackground() {
     };
 
     const interval = setInterval(draw, 33);
-
     return () => {
       clearInterval(interval);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 opacity-50"
-    />
-  );
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0 opacity-50" />;
 }
 
-// --- (B) COMPOSANT INTERNE : CARTE À GRATTER ---
+// --- CARTE À GRATTER ---
 function ScratchCard({ author, text, onScratched }) {
   const canvasRef = useRef(null);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -114,15 +105,6 @@ function ScratchCard({ author, text, onScratched }) {
     }
   };
 
-  const handleMouseMove = (e) => {
-    if (e.buttons === 1) scratch(e.clientX, e.clientY);
-  };
-
-  const handleTouchMove = (e) => {
-    const touch = e.touches[0];
-    scratch(touch.clientX, touch.clientY);
-  };
-
   return (
     <div className="relative w-full bg-slate-950/90 border border-amber-500/40 rounded-2xl overflow-hidden min-h-[200px] flex items-center justify-center p-6 shadow-inner">
       <div className="text-center w-full select-none">
@@ -134,8 +116,8 @@ function ScratchCard({ author, text, onScratched }) {
       {!isRevealed && (
         <canvas
           ref={canvasRef}
-          onMouseMove={handleMouseMove}
-          onTouchMove={handleTouchMove}
+          onMouseMove={(e) => e.buttons === 1 && scratch(e.clientX, e.clientY)}
+          onTouchMove={(e) => scratch(e.touches[0].clientX, e.touches[0].clientY)}
           className="absolute inset-0 w-full h-full cursor-pointer touch-none z-10 transition-opacity duration-500"
         />
       )}
@@ -143,9 +125,25 @@ function ScratchCard({ author, text, onScratched }) {
   );
 }
 
-// --- (C) COMPOSANT PRINCIPAL : PARTY PAGE ---
+// --- PAGE PRINCIPALE ---
 export default function PartyPage({ onBack }) {
-  const SECRET_CODE = "2026"; 
+  const SECRET_CODE = "2026";
+  const DEFAULT_MESSAGES = [
+    { id: 1, author: "Marie", text: "Joyeux anniversaire Ernest ! Profite bien de ta journée ! 🎉" },
+    { id: 2, author: "Moussa", text: "Bonne fête frérot, que du bonheur et la réussite !" },
+    { id: 3, author: "Awa", text: "Un très joyeux anniversaire à toi Ernest !! 🎂✨" }
+  ];
+
+  // 1. CHARGEMENT INITIAL DEPUIS LE LOCALSTORAGE
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('ernest_party_messages');
+    return saved ? JSON.parse(saved) : DEFAULT_MESSAGES;
+  });
+
+  // 2. SAUVEGARDE DANS LE LOCALSTORAGE À CHAQUE NOUVEAU MESSAGE
+  useEffect(() => {
+    localStorage.setItem('ernest_party_messages', JSON.stringify(messages));
+  }, [messages]);
 
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
@@ -170,12 +168,6 @@ export default function PartyPage({ onBack }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const [messages, setMessages] = useState([
-    { id: 1, author: "Marie", text: "Joyeux anniversaire Ernest ! Profite bien de ta journée ! 🎉" },
-    { id: 2, author: "Moussa", text: "Bonne fête frérot, que du bonheur et la réussite !" },
-    { id: 3, author: "Awa", text: "Un très joyeux anniversaire à toi Ernest !! 🎂✨" }
-  ]);
-
   const [authorName, setAuthorName] = useState('');
   const [messageText, setMessageText] = useState('');
   const [sentSuccess, setSentSuccess] = useState(false);
@@ -189,7 +181,8 @@ export default function PartyPage({ onBack }) {
     e.preventDefault();
     if (!authorName.trim() || !messageText.trim()) return;
 
-    setMessages([...messages, { id: Date.now(), author: authorName, text: messageText }]);
+    const newMessages = [...messages, { id: Date.now(), author: authorName, text: messageText }];
+    setMessages(newMessages);
     setAuthorName('');
     setMessageText('');
     setSentSuccess(true);
@@ -211,25 +204,19 @@ export default function PartyPage({ onBack }) {
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-white p-4 sm:p-6 flex flex-col items-center max-w-2xl mx-auto overflow-hidden">
-      
-      {/* 🟢 PLUIE MATRIX VERT D'ORIGINE */}
       <MatrixBackground />
 
-      {/* 🎭 RED CARPET */}
+      {/* RIDEAU ROUGE */}
       <div className={`fixed inset-0 z-50 pointer-events-none flex transition-transform duration-1000 ease-in-out ${curtainOpen ? 'translate-y-[-100%]' : 'translate-y-0'}`}>
-        <div className="w-1/2 h-full bg-gradient-to-r from-red-900 to-red-600 border-r-4 border-amber-400 shadow-2xl flex items-center justify-end pr-4">
-          <span className="text-4xl">👑</span>
-        </div>
-        <div className="w-1/2 h-full bg-gradient-to-l from-red-900 to-red-600 border-l-4 border-amber-400 shadow-2xl flex items-center justify-start pl-4">
-          <span className="text-4xl">👑</span>
-        </div>
+        <div className="w-1/2 h-full bg-gradient-to-r from-red-900 to-red-600 border-r-4 border-amber-400 shadow-2xl flex items-center justify-end pr-4"><span className="text-4xl">👑</span></div>
+        <div className="w-1/2 h-full bg-gradient-to-l from-red-900 to-red-600 border-l-4 border-amber-400 shadow-2xl flex items-center justify-start pl-4"><span className="text-4xl">👑</span></div>
       </div>
 
       <button onClick={onBack} className="self-start flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors cursor-pointer relative z-10">
         <ArrowLeft className="w-5 h-5" /> Retour au décompte
       </button>
 
-      {/* 📸 GALERIE */}
+      {/* GALERIE */}
       <div className="w-full bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-3xl p-6 mb-8 text-center shadow-2xl flex flex-col items-center relative z-10">
         <h2 className="text-2xl font-black bg-gradient-to-r from-amber-300 to-pink-500 bg-clip-text text-transparent mb-2 flex items-center justify-center gap-2">
           <Sparkles className="w-6 h-6 text-amber-400 animate-spin" /> VIP Red Carpet - Ernest 🎉
@@ -240,98 +227,45 @@ export default function PartyPage({ onBack }) {
         </p>
 
         <div className="relative flex items-center justify-center w-full">
-          <button 
-            onClick={() => setCurrentPhotoIndex((prev) => (prev > 0 ? prev - 1 : flashbackPhotos.length - 1))}
-            className="absolute left-0 z-20 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-full text-white cursor-pointer"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-
-          <div 
-            onClick={() => { setIsPhotoZoomed(true); triggerConfetti(); }}
-            className="relative group w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-amber-400 p-1 shadow-[0_0_50px_rgba(251,191,36,0.3)] overflow-hidden bg-slate-950 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-500"
-          >
-            <img 
-              src={flashbackPhotos[currentPhotoIndex].url} 
-              alt="Ernest Flashback" 
-              className="w-full h-full object-cover rounded-full"
-            />
-            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <ZoomIn className="w-8 h-8 text-white" />
-            </div>
+          <button onClick={() => setCurrentPhotoIndex((prev) => (prev > 0 ? prev - 1 : flashbackPhotos.length - 1))} className="absolute left-0 z-20 p-2 bg-slate-800/80 rounded-full text-white cursor-pointer"><ChevronLeft className="w-6 h-6" /></button>
+          <div onClick={() => { setIsPhotoZoomed(true); triggerConfetti(); }} className="relative group w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-amber-400 p-1 shadow-[0_0_50px_rgba(251,191,36,0.3)] overflow-hidden bg-slate-950 flex items-center justify-center cursor-pointer">
+            <img src={flashbackPhotos[currentPhotoIndex].url} alt="Ernest" className="w-full h-full object-cover rounded-full" />
+            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><ZoomIn className="w-8 h-8 text-white" /></div>
           </div>
-
-          <button 
-            onClick={() => setCurrentPhotoIndex((prev) => (prev < flashbackPhotos.length - 1 ? prev + 1 : 0))}
-            className="absolute right-0 z-20 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-full text-white cursor-pointer"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
+          <button onClick={() => setCurrentPhotoIndex((prev) => (prev < flashbackPhotos.length - 1 ? prev + 1 : 0))} className="absolute right-0 z-20 p-2 bg-slate-800/80 rounded-full text-white cursor-pointer"><ChevronRight className="w-6 h-6" /></button>
         </div>
-
-        <p className="text-slate-500 text-xs mt-4">Utilise les flèches pour remonter le temps ⏳</p>
       </div>
 
-      {/* 🔍 ZOOM PHOTO */}
+      {/* ZOOM PHOTO */}
       {isPhotoZoomed && (
         <div onClick={() => setIsPhotoZoomed(false)} className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer">
-          <button onClick={() => setIsPhotoZoomed(false)} className="absolute top-6 right-6 text-white bg-slate-800/80 p-3 rounded-full cursor-pointer">
-            <X className="w-6 h-6" />
-          </button>
+          <button onClick={() => setIsPhotoZoomed(false)} className="absolute top-6 right-6 text-white bg-slate-800/80 p-3 rounded-full"><X className="w-6 h-6" /></button>
           <img src={flashbackPhotos[currentPhotoIndex].url} alt="Ernest en grand" className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl border border-slate-700" />
         </div>
       )}
 
-      {/* ✍️ ENVOI MESSAGE */}
+      {/* ENVOI MESSAGE */}
       <div className="w-full bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-3xl p-6 mb-8 shadow-xl relative z-10">
-        <h3 className="text-xl font-bold mb-2 flex items-center gap-2 text-amber-300">
-          <Send className="w-5 h-5" /> Laisser un message à Ernest
-        </h3>
+        <h3 className="text-xl font-bold mb-2 flex items-center gap-2 text-amber-300"><Send className="w-5 h-5" /> Laisser un message à Ernest</h3>
         <p className="text-slate-400 text-sm mb-4">Ton mot sera recouvert d'une couche dorée mystère à gratter !</p>
 
         <form onSubmit={handleSendMessage} className="flex flex-col gap-3">
-          <input 
-            type="text" 
-            placeholder="Ton nom / prénom"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            className="px-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl focus:outline-none focus:border-amber-500"
-            required
-          />
-          <textarea 
-            placeholder="Ton message d'anniversaire..."
-            rows="3"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            className="px-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl focus:outline-none focus:border-amber-500 resize-none"
-            required
-          />
-          <button type="submit" className="py-3 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-slate-950 font-black rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer">
-            <Send className="w-4 h-4" /> Envoyer mon message
-          </button>
+          <input type="text" placeholder="Ton nom / prénom" value={authorName} onChange={(e) => setAuthorName(e.target.value)} className="px-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl focus:outline-none focus:border-amber-500" required />
+          <textarea placeholder="Ton message d'anniversaire..." rows="3" value={messageText} onChange={(e) => setMessageText(e.target.value)} className="px-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl focus:outline-none focus:border-amber-500 resize-none" required />
+          <button type="submit" className="py-3 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-slate-950 font-black rounded-xl hover:opacity-90 flex items-center justify-center gap-2 cursor-pointer"><Send className="w-4 h-4" /> Envoyer mon message</button>
         </form>
-
-        {sentSuccess && <p className="text-green-400 text-sm text-center mt-3 animate-bounce">✅ Message envoyé à la boîte à gratter d'Ernest ! 🎉</p>}
+        {sentSuccess && <p className="text-green-400 text-sm text-center mt-3 animate-bounce">✅ Message enregistré ! 🎉</p>}
       </div>
 
-      {/* 🎰 ESPACE GRATTE */}
+      {/* ESPACE GRATTE */}
       <div className="w-full bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-3xl p-6 shadow-xl mb-8 relative z-10">
         {!isAuthenticated ? (
           <div className="text-center">
-            <div className="flex justify-center mb-3">
-              <div className="p-3 bg-slate-800 rounded-full text-amber-400"><Lock className="w-6 h-6" /></div>
-            </div>
+            <div className="flex justify-center mb-3"><div className="p-3 bg-slate-800 rounded-full text-amber-400"><Lock className="w-6 h-6" /></div></div>
             <h3 className="text-lg font-bold mb-1">Espace Grattage VIP Ernest</h3>
-            <p className="text-slate-400 text-xs mb-4">Entre ton PIN pour gratter et découvrir tes messages 1 par 1.</p>
-
+            <p className="text-slate-400 text-xs mb-4">Entre ton PIN pour gratter tes messages.</p>
             <form onSubmit={handleLogin} className="flex gap-2 max-w-xs mx-auto">
-              <input 
-                type="password" 
-                placeholder="PIN..."
-                value={inputCode}
-                onChange={(e) => setInputCode(e.target.value)}
-                className="px-4 py-2 bg-slate-950/80 border border-slate-700 rounded-xl text-center font-mono focus:outline-none focus:border-amber-500 w-full"
-              />
+              <input type="password" placeholder="PIN..." value={inputCode} onChange={(e) => setInputCode(e.target.value)} className="px-4 py-2 bg-slate-950/80 border border-slate-700 rounded-xl text-center font-mono focus:outline-none focus:border-amber-500 w-full" />
               <button type="submit" className="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl hover:bg-amber-400 cursor-pointer">OK</button>
             </form>
             {errorMessage && <p className="text-red-400 text-xs mt-2">{errorMessage}</p>}
@@ -339,41 +273,20 @@ export default function PartyPage({ onBack }) {
         ) : (
           <div>
             <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-              <span className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                <Unlock className="w-4 h-4" /> Ticket à gratter {currentIndex + 1} sur {messages.length}
-              </span>
+              <span className="flex items-center gap-2 text-amber-400 font-bold text-sm"><Unlock className="w-4 h-4" /> Ticket {currentIndex + 1} sur {messages.length}</span>
               <button onClick={() => setIsAuthenticated(false)} className="text-xs text-slate-500 hover:text-slate-300 cursor-pointer">Verrouiller</button>
             </div>
 
             {messages.length > 0 ? (
               <div className="flex flex-col items-center">
-                <ScratchCard 
-                  key={messages[currentIndex].id}
-                  author={messages[currentIndex].author}
-                  text={messages[currentIndex].text}
-                  onScratched={triggerConfetti}
-                />
-
+                <ScratchCard key={messages[currentIndex].id} author={messages[currentIndex].author} text={messages[currentIndex].text} onScratched={triggerConfetti} />
                 <div className="flex flex-wrap justify-center gap-3 w-full mt-6">
                   {currentIndex < messages.length - 1 ? (
-                    <button 
-                      onClick={() => { setCurrentIndex(currentIndex + 1); triggerConfetti(); }}
-                      className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 to-pink-500 text-slate-950 font-black rounded-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
-                    >
-                      <span>Ticket Suivant</span>
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
+                    <button onClick={() => { setCurrentIndex(currentIndex + 1); triggerConfetti(); }} className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 to-pink-500 text-slate-950 font-black rounded-xl hover:scale-105 flex items-center justify-center gap-2 cursor-pointer shadow-lg"><span>Ticket Suivant</span><ChevronRight className="w-5 h-5" /></button>
                   ) : (
                     <p className="text-pink-400 font-bold text-sm w-full text-center mb-2">🎉 Tu as gratté tous tes tickets !</p>
                   )}
-
-                  <button 
-                    onClick={() => setCurrentIndex(0)}
-                    className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-700 text-sm"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>Recommencer</span>
-                  </button>
+                  <button onClick={() => setCurrentIndex(0)} className="px-4 py-3 bg-slate-800 text-slate-300 font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer border border-slate-700 text-sm"><RotateCcw className="w-4 h-4" /><span>Recommencer</span></button>
                 </div>
               </div>
             ) : (
@@ -382,7 +295,6 @@ export default function PartyPage({ onBack }) {
           </div>
         )}
       </div>
-
     </div>
   );
 }
