@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import Countdown from './components/Countdown'; // Ou ajuster selon la structure de tes fichiers
+import Countdown from './components/Countdown';
 import PartyPage from './components/PartyPage';
 
 export default function App() {
   const [showParty, setShowParty] = useState(false);
 
-  // 🎯 DATE DU TEST : Aujourd'hui à 21h23
-  const now = new Date();
-  const testTargetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 29, 0);
+  // 🎯 METS TA VRAIE DATE ET HEURE D'ANNIVERSAIRE ICI (Exemple: 25 Août 2026 à 00:00:00)
+  // Format : new Date('YYYY-MM-DDTHH:mm:ss')
+  const birthdayDate = new Date('2026-08-25T00:00:00');
 
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
       {!showParty ? (
         <div className="flex flex-col items-center gap-6">
-          <Countdown targetDate={testTargetDate} />
+          <Countdown targetDate={birthdayDate} />
           
           <button
             onClick={() => setShowParty(true)}
