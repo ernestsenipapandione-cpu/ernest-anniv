@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Lock, Unlock, Send, Sparkles, ChevronRight, RotateCcw, X, ZoomIn, History, ChevronLeft } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { db } from '../firebase';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
 
 // --- FOND MATRIX VERT ---
 function MatrixBackground() {
@@ -26,10 +28,8 @@ function MatrixBackground() {
     const draw = () => {
       ctx.fillStyle = 'rgba(2, 6, 23, 0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       ctx.fillStyle = '#22c55e'; 
       ctx.font = `bold ${fontSize}px monospace`;
-      
       ctx.shadowBlur = 8;
       ctx.shadowColor = '#15803d';
 
@@ -128,22 +128,21 @@ function ScratchCard({ author, text, onScratched }) {
 // --- PAGE PRINCIPALE ---
 export default function PartyPage({ onBack }) {
   const SECRET_CODE = "2026";
-  const DEFAULT_MESSAGES = [
-    { id: 1, author: "Marie", text: "Joyeux anniversaire Ernest ! Profite bien de ta journée ! 🎉" },
-    { id: 2, author: "Moussa", text: "Bonne fête frérot, que du bonheur et la réussite !" },
-    { id: 3, author: "Awa", text: "Un très joyeux anniversaire à toi Ernest !! 🎂✨" }
-  ];
+  const [messages, setMessages] = useState([]);
 
-  // 1. CHARGEMENT INITIAL DEPUIS LE LOCALSTORAGE
-  const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('ernest_party_messages');
-    return saved ? JSON.parse(saved) : DEFAULT_MESSAGES;
-  });
-
-  // 2. SAUVEGARDE DANS LE LOCALSTORAGE À CHAQUE NOUVEAU MESSAGE
+  // 📡 SYNCHRONISATION TEMPS RÉEL DEPUIS FIREBASE
   useEffect(() => {
-    localStorage.setItem('ernest_party_messages', JSON.stringify(messages));
-  }, [messages]);
+    const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedMessages = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setMessages(fetchedMessages);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
@@ -177,17 +176,26 @@ export default function PartyPage({ onBack }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleSendMessage = (e) => {
+  // 📤 ENVOYER LE MESSAGE VERS FIREBASE
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!authorName.trim() || !messageText.trim()) return;
 
-    const newMessages = [...messages, { id: Date.now(), author: authorName, text: messageText }];
-    setMessages(newMessages);
-    setAuthorName('');
-    setMessageText('');
-    setSentSuccess(true);
-    triggerConfetti();
-    setTimeout(() => setSentSuccess(false), 4000);
+    try {
+      await addDoc(collection(db, "messages"), {
+        author: authorName,
+        text: messageText,
+        createdAt: serverTimestamp()
+      });
+
+      setAuthorName('');
+      setMessageText('');
+      setSentSuccess(true);
+      triggerConfetti();
+      setTimeout(() => setSentSuccess(false), 4000);
+    } catch (err) {
+      console.error("Erreur d'envoi : ", err);
+    }
   };
 
   const handleLogin = (e) => {
@@ -254,7 +262,7 @@ export default function PartyPage({ onBack }) {
           <textarea placeholder="Ton message d'anniversaire..." rows="3" value={messageText} onChange={(e) => setMessageText(e.target.value)} className="px-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl focus:outline-none focus:border-amber-500 resize-none" required />
           <button type="submit" className="py-3 bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-slate-950 font-black rounded-xl hover:opacity-90 flex items-center justify-center gap-2 cursor-pointer"><Send className="w-4 h-4" /> Envoyer mon message</button>
         </form>
-        {sentSuccess && <p className="text-green-400 text-sm text-center mt-3 animate-bounce">✅ Message enregistré ! 🎉</p>}
+        {sentSuccess && <p className="text-green-400 text-sm text-center mt-3 animate-bounce">✅ Message enregistré en direct ! 🎉</p>}
       </div>
 
       {/* ESPACE GRATTE */}
