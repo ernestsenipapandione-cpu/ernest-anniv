@@ -7,7 +7,7 @@ export default function App() {
 
   // 🎯 METS TA VRAIE DATE ET HEURE D'ANNIVERSAIRE ICI (Exemple: 25 Août 2026 à 00:00:00)
   // Format : new Date('YYYY-MM-DDTHH:mm:ss')
-  const birthdayDate = new Date('2026-08-25T00:00:00');
+  const birthdayDate = new Date('2026-08-23T00:00:00');
 
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
